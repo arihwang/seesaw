@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시소 내분점 실험실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#F3EFFC; --bg2:#E7E1FB; --clay:#FFFFFF;
+    --ink:#4A4458; --sub:#8B84A3;
+    --lav:#C9C2FF; --lav-dark:#9C8FFF;
+    --peach:#FFD3B0; --peach-dark:#FF9F63;
+    --mint:#AEEEDB; --mint-dark:#55C9A6;
+    --yellow:#FFE99A; --yellow-dark:#F5C542;
+    --pink:#FFB4C6; --pink-dark:#FF7C9C;
+    --green:#B9E6A4; --green-dark:#6FBE55;
+    --gray:#DDD8EF; --gray-dark:#A79CC7;
+    --wood:#EAD0A6; --wood-dark:#CBA46B;
+    --blue:#5B93D6;
+  }
+  *{box-sizing:border-box;}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0; min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 10%, #fff 0%, transparent 40%),
+      radial-gradient(circle at 90% 85%, #fff 0%, transparent 35%),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+    font-family:'Gowun Dodum', sans-serif; color:var(--ink);
+    padding:clamp(16px,3vw,32px) clamp(12px,3vw,20px) 60px;
+    display:flex; justify-content:center;
+  }
+  .app{ width:100%; max-width:880px; }
+  h1,h2,h3{ font-family:'Jua', sans-serif; font-weight:400; margin:0; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .clay{ background:var(--clay); border-radius:28px;
+    box-shadow:8px 8px 18px rgba(150,130,200,0.28), -8px -8px 18px rgba(255,255,255,0.9); }
+  .clay-btn{
+    font-family:'Jua', sans-serif; font-size:clamp(15px,1.8vw,17px); border:none; cursor:pointer;
+    border-radius:20px; padding:13px 24px; min-height:46px; color:var(--ink); background:var(--lav);
+    box-shadow:5px 5px 12px rgba(150,130,200,0.35), -4px -4px 10px rgba(255,255,255,0.85);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .clay-btn:active{ transform:translateY(2px) scale(0.98);
+    box-shadow:inset 4px 4px 8px rgba(120,100,180,0.35), inset -3px -3px 6px rgba(255,255,255,0.6); }
+  .clay-btn.green{ background:var(--green); }
+  .clay-btn.yellow{ background:var(--yellow); }
+  .clay-btn.mint{ background:var(--mint); }
+  .clay-btn.pink{ background:var(--pink); }
+  .clay-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .clay-btn.small{ padding:10px 16px; font-size:14px; border-radius:14px; min-height:40px; }
+
+  input[type=number], input[type=text]{
+    font-family:'JetBrains Mono', monospace; font-size:18px; padding:12px 14px;
+    width:120px; min-height:46px; border:none; border-radius:16px; background:var(--bg1); color:var(--ink);
+    text-align:center;
+    box-shadow:inset 4px 4px 8px rgba(150,130,200,0.25), inset -3px -3px 6px rgba(255,255,255,0.9);
+  }
+  input:focus{ outline:2px solid var(--lav-dark); outline-offset:1px; }
+
+  header{ text-align:center; margin-bottom:18px; }
+  header h1{ font-size:clamp(24px,3.4vw,30px); color:var(--ink); }
+  header p{ margin:6px 0 0; color:var(--sub); font-size:14px; }
+
+  .dots{ display:flex; justify-content:center; gap:10px; margin:16px 0 20px; flex-wrap:wrap; }
+  .dot{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Jua',sans-serif; font-size:14px; color:var(--sub); background:var(--clay);
+    box-shadow:3px 3px 8px rgba(150,130,200,0.25), -3px -3px 6px rgba(255,255,255,0.9); }
+  .dot.active{ background:var(--lav); color:#fff; transform:scale(1.12); }
+  .dot.done{ background:var(--green); color:#fff; }
+
+  .card{ padding:clamp(18px,3vw,28px) clamp(18px,3vw,28px) 28px; margin-bottom:16px; }
+  .stage-title{ font-size:clamp(20px,2.6vw,24px); margin-bottom:8px; }
+  .supp-badge{ display:inline-block; margin-left:8px; padding:3px 10px; border-radius:12px; background:var(--pink); font-family:'Jua',sans-serif; font-size:12px; vertical-align:middle; }
+  .stage-context{ font-size:clamp(15px,1.9vw,16.5px); line-height:1.7; background:var(--bg1); border-radius:18px; padding:14px 16px; }
+
+  .ask-box{ margin-top:14px; padding:14px 16px; border-radius:18px; background:var(--yellow); font-size:clamp(15px,2vw,17px); }
+  .ask-box b{ font-family:'Jua', sans-serif; }
+
+  .ratio-caption{ display:none; text-align:center; font-family:'Jua',sans-serif; font-size:15px; color:var(--ink);
+    margin-top:18px; background:var(--mint); border-radius:16px; padding:8px 12px; }
+  .ratio-caption.show{ display:block; }
+
+  .scene-wrap{ margin:10px 0 6px; }
+  svg{ width:100%; height:auto; display:block; }
+
+  .controls{ margin-top:14px; display:flex; flex-direction:column; gap:12px; }
+  .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .feedback{ margin-top:12px; padding:12px 16px; border-radius:16px; font-size:15px; display:none; }
+  .feedback.ok{ display:block; background:var(--green); color:#274d1c; }
+  .feedback.no{ display:block; background:var(--pink); color:#6b1230; }
+  .feedback.info{ display:block; background:var(--lav); color:#33285e; }
+
+  .hint-box{
+    margin-top:10px; padding:14px 16px; border-radius:16px; font-size:14px; line-height:1.7;
+    background:var(--bg1); display:none;
+  }
+  .hint-box.show{ display:block; }
+
+  .bonus{ margin-top:16px; padding:16px; border-radius:18px; background:var(--peach); display:none; }
+  .bonus.show{ display:block; }
+  .bonus h3{ font-size:16px; margin-bottom:8px; }
+
+  .footer-row{ display:flex; justify-content:space-between; align-items:center; margin-top:18px; flex-wrap:wrap; gap:10px; }
+
+  .shake{ animation:shake .4s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);} }
+  .pop{ animation:pop .5s; }
+  @keyframes pop{ 0%{transform:scale(1);} 30%{transform:scale(1.04);} 60%{transform:scale(.99);} 100%{transform:scale(1);} }
+
+  .done-screen{ text-align:center; padding:40px 20px; }
+  .done-screen .trophy{ font-size:64px; }
+
+  @media (min-width: 700px){
+    .card{ padding:32px 36px 34px; }
+  }
+  @media (prefers-reduced-motion: reduce){ .shake,.pop{ animation:none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>⚖️ 시소 내분점 실험실</h1>
+    <p>먼저 생각하고, 시소로 확인해보기 — 공통수학1 선분의 내분점</p>
+  </header>
+
+  <div class="dots" id="dots"></div>
+
+  <div class="card clay" id="mainCard">
+    <h2 class="stage-title" id="stageTitle"></h2>
+    <div class="stage-context" id="stageContext"></div>
+    <div class="ask-box" id="askBox"></div>
+
+    <div class="ratio-caption" id="ratioCaption">📐 받침점을 기준으로 한 내분 비</div>
+    <div class="scene-wrap">
+      <svg id="scene" viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="controls" id="controls"></div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="hint-box" id="hintBox"></div>
+    <div class="bonus" id="bonusBox"></div>
+
+    <div class="footer-row">
+      <div class="row">
+        <button class="clay-btn small yellow" id="hintBtn">💡 힌트</button>
+        <button class="clay-btn small mint" id="regenBtn">🔄 새 문제</button>
+      </div>
+      <div class="row">
+        <button class="clay-btn small" id="checkBtn">✅ 답 제출하고 시소로 확인</button>
+        <button class="clay-btn small green" id="nextBtn" style="display:none;">다음 단계 ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = sel => document.querySelector(sel);
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function choice(arr){ return arr[randInt(0,arr.length-1)]; }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); return b===0?a:gcd(b,a%b); }
+function simplifyPair(a,b){ const g=gcd(a,b)||1; return [a/g, b/g]; }
+
+/* ================= 단계 생성 ================= */
+function withRange(s){
+  s.rangeMin = Math.min(s.A, s.B, s.F) - 3;
+  s.rangeMax = Math.max(s.A, s.B, s.F) + 3;
+  return s;
+}
+function genStage1(){
+  const A = randInt(0,5);
+  const half = randInt(1,4);
+  const B = A + half*2;
+  const F = (A+B)/2;
+  return withRange({
+    level:1, title:'1단계 · 무게가 같아요',
+    context:`A(${A})와 B(${B})에 무게가 똑같은(1:1) 두 친구가 앉았어요.`,
+    ask:`시소가 수평이 되는 받침점의 위치는 어디일까요?`,
+    A,B,wA:1,wB:1,F, unknown:'F',
+    hint:'무게가 같으면 받침점은 두 점의 정가운데(중점)에 있어요.'
+  });
+}
+function genStage2(){
+  const pairs=[[1,2],[2,1],[1,3],[3,1]];
+  const [wA,wB]=choice(pairs);
+  const A=randInt(0,4);
+  const k=randInt(1,3);
+  const B=A + k*(wA+wB);
+  const F=A + wB*k;
+  return withRange({
+    level:2, title:'2단계 · 무게가 달라요',
+    context:`A(${A})에는 무게 ${wA}, B(${B})에는 무게 ${wB}인 친구가 앉았어요.`,
+    ask:`시소가 수평이 되는 받침점의 위치는 어디일까요?`,
+    A,B,wA,wB,F, unknown:'F',
+    hint:'무거운 쪽일수록 받침점과 더 가까운 거리에 있어야 균형이 맞아요.'
+  });
+}
+function genStage3(){
+  const pairs=[[2,3],[3,2],[3,4],[4,3],[3,5],[5,3]];
+  const [wA,wB]=choice(pairs);
+  const A=randInt(-8,-1);
+  const k=randInt(1,3);
+  const B=A + k*(wA+wB);
+  const F=A + wB*k;
+  return withRange({
+    level:3, title:'3단계 · 음수 좌표 도전',
+    context:`A(${A})에는 무게 ${wA}, B(${B})에는 무게 ${wB}인 친구가 앉았어요.`,
+    ask:`시소가 수평이 되는 받침점의 위치는 어디일까요?`,
+    A,B,wA,wB,F, unknown:'F',
+    hint:'공식은 그대로! 음수는 부호에 주의해서 계산하세요.'
+  });
+}
+function genStage4(){
+  const pairs=[[2,3],[3,2],[1,4],[4,1],[2,5],[5,2],[3,4]];
+  const [wA,wB]=choice(pairs);
+  const A=randInt(-5,3);
+  const k=randInt(1,3);
+  const B=A + k*(wA+wB);
+  const F=A + wB*k;
+  return withRange({
+    level:4, title:'4단계 · 거꾸로 추리하기 (무게)',
+    context:`A(${A})에 무게 ${wA}인 친구가 앉아 있고, 받침점 x=${F}에서 시소가 수평이 되었어요.`,
+    ask:`B(${B})에 앉은 친구의 무게는 얼마일까요?`,
+    A,B,wA,wB,F, unknown:'wB',
+    hint:'균형 조건: wA×(F−A) = wB×(B−F) 를 이용해 wB를 구해보세요.'
+  });
+}
+function genStage5(){
+  const pairs=[[2,3],[3,2],[1,3],[3,1],[2,5],[5,2],[4,3]];
+  const [wA,wB]=choice(pairs);
+  const A=randInt(-6,2);
+  const k=randInt(1,4);
+  const B=A + k*(wA+wB);
+  const F=A + wB*k;
+  return withRange({
+    level:5, title:'5단계 · 거꾸로 추리하기 (좌표)',
+    context:`A(${A})에는 무게 ${wA}, 어떤 위치 B에는 무게 ${wB}인 친구가 앉아 받침점 x=${F}에서 균형을 이뤘어요.`,
+    ask:`B의 좌표는 어디일까요?`,
+    A,B,wA,wB,F, unknown:'B',
+    hint:'wB×B = F×(wA+wB) − wA×A 로 정리한 뒤 B를 구해보세요.'
+  });
+}
+function genStage6(){
+  const pairs=[[2,3],[3,4],[3,5],[4,5],[5,3]];
+  const [wA,wB]=choice(pairs);
+  const A=randInt(-6,-1);
+  const k=randInt(1,3);
+  const B=A + k*(wA+wB);
+  const F=A + wB*k;
+  const names=[['민준','서연'],['도윤','하은'],['지호','수아'],['시우','채원']];
+  const [nameA,nameB]=choice(names);
+  return withRange({
+    level:6, title:'6단계 · 종합 문제', bonus:true,
+    context:`체육대회 시소 이벤트! ${nameA}는 A(${A}) 자리에, ${nameB}는 B(${B}) 자리에 앉았어요. ${nameA}의 무게추는 ${wA}, ${nameB}의 무게추는 ${wB}입니다.`,
+    ask:`시소가 수평이 되는 받침점의 위치는 어디일까요?`,
+    A,B,wA,wB,F, unknown:'F',
+    hint:'지금까지 배운 방법을 그대로 적용해보세요.'
+  });
+}
+const GENERATORS = [genStage1, genStage2, genStage3, genStage4, genStage5, genStage6];
+
+/* ================= 상태 ================= */
+let stageIdx = 0, stage = null, solved = false, wrongCount = 0, isSupplement = false;
+
+function renderDots(){
+  const wrap = $('#dots'); wrap.innerHTML='';
+  for(let i=0;i<6;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===stageIdx?' active':(i<stageIdx?' done':''));
+    d.textContent = i<stageIdx ? '✓' : (i+1);
+    wrap.appendChild(d);
+  }
+}
+
+/* ================= 물리 계산 ================= */
+function calcAngle(A,B,wA,wB,F){
+  const torqueA = wA*(F-A), torqueB = wB*(B-F);
+  const diff = torqueB - torqueA;
+  const norm = (wA+wB) * Math.max(1, Math.abs(B-A)) * 0.5;
+  let angle = norm===0 ? 0 : (diff/norm)*16;
+  angle = Math.max(-16, Math.min(16, angle));
+  if(Math.abs(diff) < 1e-6) angle = 0;
+  return angle;
+}
+function round2(n){ return Math.round(n*100)/100; }
+
+function weightSVG(x, label, weightText, isUnknown, colorKey, beamY){
+  const colors = { peach:['#FFD3B0','#FF9F63'], mint:['#AEEEDB','#55C9A6'], gray:['#DDD8EF','#A79CC7'] };
+  const [fill, dark] = isUnknown ? colors.gray : colors[colorKey];
+  return `
+  <g transform="translate(${x},${beamY})">
+    <text x="0" y="-96" text-anchor="middle" font-family="JetBrains Mono" font-weight="700"
+          font-size="${isUnknown?26:24}" fill="${dark}">${weightText}</text>
+    <line x1="0" y1="-9" x2="0" y2="-42" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="0" cy="-64" r="22" fill="${fill}" stroke="${dark}" stroke-width="3"/>
+    <circle cx="-7" cy="-68" r="2.6" fill="#4A4458"/>
+    <circle cx="7" cy="-68" r="2.6" fill="#4A4458"/>
+    <path d="M-8,-59 Q0,-52 8,-59" stroke="#4A4458" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <circle cx="16" cy="-83" r="11" fill="${dark}"/>
+    <text x="16" y="-79" text-anchor="middle" font-family="Jua" font-size="12" fill="#fff">${label}</text>
+  </g>`;
+}
+
+/* ================= 씬 렌더 ================= */
+function renderScene(mode, guess){
+  const svg = $('#scene');
+  const minX = stage.rangeMin, maxX = stage.rangeMax;
+  const plotX0 = 50, plotX1 = 590;
+  const px = v => plotX0 + (v-minX)/(maxX-minX)*(plotX1-plotX0);
+  const beamY = 230;
+
+  let A=stage.A, B=stage.B, wA=stage.wA, wB=stage.wB, F=stage.F;
+  let angle = 0;
+  let showFulcrum = true, showWA = true, showWB = true;
+  let wAtext = wA, wBtext = wB, wAunknown = false, wBunknown = false;
+
+  if(mode === 'pre'){
+    if(stage.unknown==='F'){ showFulcrum = false; }
+    if(stage.unknown==='wA'){ wAtext = '?'; wAunknown = true; }
+    if(stage.unknown==='wB'){ wBtext = '?'; wBunknown = true; }
+    if(stage.unknown==='A'){ showWA = false; }
+    if(stage.unknown==='B'){ showWB = false; }
+    angle = 0;
+  } else {
+    if(stage.unknown==='F') F = guess;
+    if(stage.unknown==='wA') wA = guess;
+    if(stage.unknown==='wB') wB = guess;
+    if(stage.unknown==='A') A = guess;
+    if(stage.unknown==='B') B = guess;
+    wAtext = wA; wBtext = wB;
+    angle = calcAngle(A,B,wA,wB,F);
+  }
+
+  let ticks='';
+  for(let t=Math.ceil(minX); t<=Math.floor(maxX); t++){
+    const tx = px(t);
+    ticks += `<line x1="${tx}" y1="${beamY-6}" x2="${tx}" y2="${beamY+6}" stroke="#B8ADE0" stroke-width="2" opacity="0.5"/>`;
+    ticks += `<text x="${tx}" y="${beamY+26}" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#A79CC7">${t}</text>`;
+  }
+
+  /* 정답을 맞혔을 때만: 받침점 기준 내분 비를 시소 위에 아치로 표시 */
+  let ratioArcs = '';
+  if(mode==='result' && solved){
+    const distA = Math.abs(F-A), distB = Math.abs(B-F);
+    const [m,n] = simplifyPair(distA,distB);
+    const xA=px(A), xF=px(F), xB=px(B);
+    const midAF=(xA+xF)/2, midFB=(xF+xB)/2;
+    const arcTop = beamY-40, labelY = beamY-46;
+    ratioArcs = `
+      <path d="M ${xA} ${beamY-9} Q ${midAF} ${arcTop} ${xF} ${beamY-9}" stroke="#4A4458" stroke-width="2.5" fill="none" stroke-dasharray="3 7" stroke-linecap="round"/>
+      <path d="M ${xF} ${beamY-9} Q ${midFB} ${arcTop} ${xB} ${beamY-9}" stroke="#4A4458" stroke-width="2.5" fill="none" stroke-dasharray="3 7" stroke-linecap="round"/>
+      <text x="${midAF}" y="${labelY}" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="19" fill="#33285e">${m}</text>
+      <text x="${midFB}" y="${labelY}" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="19" fill="#33285e">${n}</text>`;
+  }
+
+  const pivotX = px(F);
+  const beamGroup = `
+    <g transform="rotate(${angle} ${pivotX} ${beamY})">
+      <rect x="${plotX0-14}" y="${beamY-9}" width="${plotX1-plotX0+28}" height="18" rx="9"
+            fill="url(#woodGrad)" stroke="#CBA46B" stroke-width="2.5"/>
+      ${ticks}
+      ${showWA ? weightSVG(px(A), 'A', wAtext, wAunknown, 'peach', beamY) : ''}
+      ${showWB ? weightSVG(px(B), 'B', wBtext, wBunknown, 'mint', beamY) : ''}
+      ${ratioArcs}
+    </g>`;
+
+  /* 받침점: 시소 널빤지 "아래"(화면상 더 아래쪽)에서 널빤지를 떠받치는 형태.
+     세모의 꼭짓점이 널빤지 밑면에 닿고, 몸통은 그보다 더 아래로 내려가도록 배치 */
+  const fulcrum = showFulcrum ? `
+    <g transform="translate(${pivotX},${beamY})">
+      <polygon points="0,9 -26,55 26,55" fill="#C9C2FF" stroke="#9C8FFF" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="0" cy="57" rx="30" ry="7" fill="#B8ADE0" opacity="0.5"/>
+      <text x="0" y="78" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="12" fill="#7A6FC7">x=${round2(F)}</text>
+    </g>` : '';
+
+  const glow = (mode==='result' && solved) ? `<text x="320" y="30" text-anchor="middle" font-family="Jua" font-size="20" fill="#6FBE55">✨ 수평이에요! ✨</text>` : '';
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="woodGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F3DFB8"/><stop offset="1" stop-color="#EAD0A6"/>
+      </linearGradient>
+    </defs>
+    ${glow}${beamGroup}${fulcrum}
+  `;
+}
+
+/* ================= 컨트롤 ================= */
+function renderControls(){
+  const c = $('#controls');
+  const label = {F:'받침점 위치 x', wA:'A의 무게', wB:'B의 무게', A:'A의 좌표', B:'B의 좌표'}[stage.unknown];
+  c.innerHTML = `
+    <div class="row">
+      <span style="font-size:14px;color:var(--sub);">${label} =</span>
+      <input type="number" id="numIn" placeholder="?" step="1">
+    </div>`;
+}
+
+/* ================= 정답 확인 ================= */
+function checkAnswer(){
+  const key = stage.unknown;
+  const raw = $('#numIn').value;
+  const guess = parseFloat(raw);
+  const correct = stage[key];
+  const card = $('#mainCard');
+  const fb = $('#feedback');
+
+  if(raw === '' || isNaN(guess)){
+    fb.className = 'feedback no';
+    fb.textContent = '먼저 값을 입력해주세요!';
+    return;
+  }
+
+  if(Math.abs(guess - correct) < 1e-6){
+    solved = true;
+    renderScene('result', guess);
+    card.classList.add('pop'); setTimeout(()=>card.classList.remove('pop'), 500);
+
+    $('#checkBtn').disabled = true;
+    $('#numIn').disabled = true;
+    $('#ratioCaption').classList.add('show');
+
+    if(wrongCount === 0){
+      fb.className = 'feedback ok';
+      fb.textContent = '🎉 한 번에 정답! 시소가 완벽하게 수평을 이뤘어요.';
+      if(stage.bonus){ renderBonus(); } else { $('#nextBtn').style.display = 'inline-block'; }
+      updateDots();
+    } else {
+      fb.className = 'feedback info';
+      fb.textContent = '수평은 맞췄어요! 다만 처음에 실수가 있었으니, 비슷한 보충 문제로 한 번 더 확인해볼게요.';
+      const supBtn = document.createElement('button');
+      supBtn.className = 'clay-btn small mint';
+      supBtn.style.marginTop = '10px';
+      supBtn.textContent = '🌱 보충 문제 풀기';
+      supBtn.onclick = () => loadStage(true);
+      fb.appendChild(document.createElement('br'));
+      fb.appendChild(supBtn);
+    }
+  } else {
+    wrongCount++;
+    renderScene('result', guess);
+    fb.className = 'feedback no';
+    fb.textContent = '시소가 기울어졌어요! 어느 쪽이 더 무거워 보이는지 다시 살펴보고 계산을 확인해보세요.';
+    card.classList.add('shake'); setTimeout(()=>card.classList.remove('shake'), 400);
+  }
+}
+
+function updateDots(){
+  document.querySelectorAll('.dot').forEach((d,i)=>{ if(i===stageIdx){ d.classList.add('done'); d.textContent='✓'; } });
+}
+
+/* ================= 보너스 (6단계, 첫 시도 성공 시에만) ================= */
+function renderBonus(){
+  const box = $('#bonusBox');
+  box.classList.add('show');
+  box.innerHTML = `
+    <h3>🌟 보너스 도전</h3>
+    <p style="font-size:14px;margin:4px 0 10px;">같은 받침점 x=${stage.F}에서 균형을 이루는, <b>원래와 다른</b> 정수 무게 조합(wA′ : wB′)을 하나 더 찾아보세요!</p>
+    <div class="row">
+      <span class="mono">wA′ =</span><input type="number" id="bwA" step="1">
+      <span class="mono">wB′ =</span><input type="number" id="bwB" step="1">
+      <button class="clay-btn small" id="bonusCheck">확인</button>
+    </div>
+    <div id="bonusFb" style="margin-top:8px;font-size:14px;"></div>`;
+  $('#bonusCheck').addEventListener('click', ()=>{
+    const wA2 = parseFloat($('#bwA').value), wB2 = parseFloat($('#bwB').value);
+    const fb = $('#bonusFb');
+    if(isNaN(wA2)||isNaN(wB2)||wA2<=0||wB2<=0||!Number.isInteger(wA2)||!Number.isInteger(wB2)){
+      fb.style.color = '#6b1230'; fb.textContent = '1 이상의 정수를 입력해주세요.'; return;
+    }
+    if(wA2===stage.wA && wB2===stage.wB){
+      fb.style.color = '#6b1230'; fb.textContent = '원래 조합과 똑같아요! 다른 조합을 찾아보세요.'; return;
+    }
+    const balanced = Math.abs(wA2*(stage.F-stage.A) - wB2*(stage.B-stage.F)) < 1e-6;
+    if(balanced){
+      const [sm,sn] = simplifyPair(stage.wA, stage.wB);
+      fb.style.color = '#274d1c';
+      fb.textContent = `🎉 정답! ${stage.wA}:${stage.wB} 와 ${wA2}:${wB2} 는 같은 비율(${sm}:${sn})이라 똑같이 균형을 이뤄요.`;
+      $('#nextBtn').style.display = 'inline-block';
+    } else {
+      fb.style.color = '#6b1230';
+      fb.textContent = '이 조합으로는 균형이 맞지 않아요. wA×(F−A) = wB×(B−F) 를 확인해보세요.';
+    }
+  });
+}
+
+/* ================= 단계 로드 ================= */
+function loadStage(asSupplement){
+  isSupplement = !!asSupplement;
+  wrongCount = 0;
+  stage = GENERATORS[stageIdx]();
+  solved = false;
+
+  $('#stageTitle').innerHTML = stage.title + (isSupplement ? '<span class="supp-badge">보충 문제</span>' : '');
+  $('#stageContext').textContent = stage.context;
+  $('#askBox').innerHTML = `<b>Q.</b> ${stage.ask}`;
+  $('#feedback').className = 'feedback'; $('#feedback').innerHTML = '';
+  $('#hintBox').className = 'hint-box'; $('#hintBox').textContent = stage.hint;
+  $('#ratioCaption').classList.remove('show');
+  $('#bonusBox').className = 'bonus'; $('#bonusBox').innerHTML = '';
+  $('#nextBtn').style.display = 'none';
+  $('#checkBtn').disabled = false;
+
+  renderDots();
+  renderControls();
+  renderScene('pre');
+}
+
+$('#checkBtn').addEventListener('click', checkAnswer);
+$('#hintBtn').addEventListener('click', ()=> $('#hintBox').classList.toggle('show'));
+$('#regenBtn').addEventListener('click', ()=> loadStage(false));
+$('#nextBtn').addEventListener('click', ()=>{
+  if(stageIdx < 5){ stageIdx++; loadStage(false); } else { showDone(); }
+});
+
+function showDone(){
+  const card = $('#mainCard');
+  card.innerHTML = `
+    <div class="done-screen">
+      <div class="trophy">🏆</div>
+      <h2 style="font-size:26px;margin:10px 0;">모든 단계를 완주했어요!</h2>
+      <p style="color:var(--sub);font-size:15px;">시소의 균형점 = 선분 AB의 내분점이라는 걸 몸으로 익혔어요.<br>무게가 무거울수록 받침점과의 거리는 <b>짧아진다</b>는 사실, 잊지 마세요!</p>
+      <button class="clay-btn green" style="margin-top:18px;" onclick="location.reload()">🔁 처음부터 다시하기</button>
+    </div>`;
+  renderDots();
+  document.querySelectorAll('.dot').forEach(d=>{ d.classList.add('done'); d.textContent='✓'; });
+}
+
+loadStage(false);
+</script>
+</body>
+</html>
